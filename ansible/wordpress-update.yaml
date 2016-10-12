@@ -1,0 +1,47 @@
+## playbook to move phishing campaigns to the King Phisher Server
+## example: ansible-playbook wordpress-update.yaml --ask-become --extra-vars "server=<server>, user=<your user>" 
+
+---
+
+- hosts: "{{ server }}"
+  remote_user: "{{ user }}"
+
+  tasks:
+  - name: Download the latest wordpress version
+    get_url: 
+      url: https://wordpress.org/latest.zip
+      dest: /tmp
+  
+  - name: Copy update to /var/www/folder
+    shell: cp /tmp/*.zip /var/www/
+    become: yes
+    become_method: sudo
+ 
+  - name: Back Up Current Config
+    shell: tar -cvf backup.tar html/ 
+    args:
+        chdir: /var/www/
+    become: yes
+    become_method: sudo
+ 
+  - name: Unzip New Version
+    shell: unzip *.zip 
+    args:
+      chdir: /var/www/
+    become: yes
+    become_method: sudo
+
+  - name: Updating wordpress
+    shell: cp -R wordpress/* html/ 
+    args:
+       chdir: /var/www/
+    become: yes
+    become_method: sudo
+  
+  - name: Cleaning up...
+    shell: rm -rf wordpress/ *.zip && rm -rf /tmp/*
+    args:
+       chdir: /var/www/
+    become: yes
+    become_method: sudo
+
