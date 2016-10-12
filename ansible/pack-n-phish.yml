@@ -1,0 +1,23 @@
+## playbook to move phishing campaigns to the King Phisher Server
+## example: ansible-playbook pack-n-phish.yml --extra-vars "source=<folder> user=<username> server=<server>"
+
+---
+- hosts: localhost
+  tasks:
+  - name: archive specified director
+    shell: tar -czf /tmp/file.tar "{{ source }}"
+
+- hosts: "{{ server }}"
+  remote_user: "{{ user }}"
+  tasks:
+  - name: copy temp file from local to remote host
+    copy: src=/tmp/file.tar dest=~
+  - name: unpacks the newly transferred file  
+    shell: tar -xvf file.tar
+  - name: removes tar file
+    shell: rm file.tar
+
+- hosts: localhost
+  tasks:
+  - name: remove temporary file
+    shell: rm -rf /tmp/file.tar
