@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Clickjacking Test</title>
+        <link rel="stylesheet" type="text/css" href="./include/style.css" />
+        <script type="text/javascript" src="./include/clickjack.js"></script>
+    </head>
+    <body>
+        <div class="header">
+            <img src="./images/warroomlogo.png" />
+            <span class="headline">Clickjack Test Page</span>
+        </div>
+        <div class="content">
+            <p style="font-weight:bold;">Enter the URL to test:</p>
+            <input id="url" type="text" value="http://example.com"></input>
+            <button id="submit-test">Test it!</button>
+            <br />
+            <iframe src="about:blank" id="iframe"></iframe>
+        </div>
+    </body>
+</html>
