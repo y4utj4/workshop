@@ -98,9 +98,10 @@ class FileContent(object):
             '           <div class="clear"></div>\n'
             '           <div class="footer">\n'
             '          <span>Connect:</span>\n'
-            '              <a href="http://twitter.com" target="_blank"><img src="http://www.budget.com/budgetWeb/images/common/twitter1.png" /></a> / \n'
-            '              <a href="http://facebookcom" target="_blank"><img src="https://www.budget.com/budgetWeb/images/common/facebook1.png" /></a> /\n'
-            '              <a href="http://linkedin.com" target="_blank"><img src="https://cdn3.iconfinder.com/data/icons/free-social-icons/67/linkedin_circle_color-512.png" /></a> /\n'
+            '              <a href="http://twitter.com" target="_blank"><img src="http://www.budget.com/budgetWeb/images/common/twitter1.png" style="width:25px" /></a> / \n'
+            '              <a href="http://facebookcom" target="_blank"><img src="https://www.budget.com/budgetWeb/images/common/facebook1.png" style="width:25px" /></a> /\n'
+            '              <a href="http://linkedin.com" target="_blank"><img src="https://cdn3.iconfinder.com/data/icons/free-social-icons/67/linkedin_circle_color-512.png" style="width:25px" /></a> /\n'
+		    '      			</div>'
             '       </div>\n'
             '    <body>\n'
         )
@@ -200,28 +201,25 @@ def make_dirs (folder, site_name):
     print("[+] Appropriate permissions set")
 
 def build_files(files):
-    
-    
     # Iterate through the files variable to create and populate files using 
     # the FileContent class
     for i, val in enumerate(files):
-        
         writepath = val
         file = writepath.rsplit('/', 1)[1]
         content = FileContent()
-              
         with open (writepath, 'w') as f:
             if file == 'app.py':
                 f.write(content.app)
             elif file == 'run.py':
                 f.write(content.run)
-            elif file == 'template.py':
+            elif file == 'template.html':
             	f.write(content.template)
             elif file == "index.html":
             	f.write(content.index)
             else:
             	f.write(content.styles)
             pass
+        subprocess.check_output([ 'chmod', '-R', "755", writepath])
         print ("[+] New file \"" + file + "\" Created")
 
 if __name__ == '__main__':
