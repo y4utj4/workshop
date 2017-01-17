@@ -34,7 +34,7 @@ def main():
 				if response:
 					if verbose:
 						print (response.info())
-					if response.getcode() -- 200:
+					if response.getcode() == 200:
 						if verbose:
 							print ('[+] FOUND: %s ' % (uri) + '\n')
 						outfile.write('[+] FOUND: ' + uri + '\n')
