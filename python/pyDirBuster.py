@@ -6,9 +6,6 @@ import sys
 import urllib.request
 import ssl
 
-
-
-
 def main():
 	# setup arguments
 	parser = argparse.ArgumentParser(description='Put description here')
