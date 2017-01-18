@@ -16,7 +16,8 @@ def main():
 
 	args = parser.parse_args()
 	url = args.url
-	outfile = open(args.outfile, 'w')
+	if args.outfile:
+		outfile = open(args.outfile, 'w')
 	verbose = args.verbose
 	ssl_check = ssl.create_default_context()
 	ssl_check.check_hostname = False
