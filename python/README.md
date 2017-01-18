@@ -1,6 +1,6 @@
 ## Python Scripts / Tools
 
-This is essentially a collection of python scripts I've been working on in order to better understand the python languate while creating something useful that anyone can use. Scripts are mainly network/infosec related, but see below for a description of each tool. 
+This is essentially a collection of python scripts I've been working on in order to better understand the python language while creating something useful that anyone can use. Scripts are mainly network/infosec related, but see below for a description of each tool. 
 
 
 ## Tools
