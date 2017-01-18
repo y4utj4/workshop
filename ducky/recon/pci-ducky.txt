@@ -1,0 +1,477 @@
+DELAY 3000
+GUI r
+DELAY 1000
+STRING cmd
+ENTER
+DELAY 2000
+STRING cd c:\Users\%USERNAME%\Desktop
+ENTER
+STRING mkdir PCIFiles
+ENTER
+STRING cd PCIFiles
+ENTER
+STRING md %COMPUTERNAME%
+ENTER
+STRING cd %COMPUTERNAME%
+ENTER
+STRING md Users-Groups
+ENTER
+STRING md Services-Processes
+ENTER
+STRING md Logging
+ENTER
+STRING md System-Configuration
+ENTER
+STRING md Tasks
+ENTER
+STRING md Networking
+ENTER
+STRING ECHO ********************************* > product-info.txt
+ENTER
+STRING ECHO Get Product Info >> product-info.txt
+ENTER
+STRING ECHO Running Command: wmic product get name,version >> product-info.txt
+ENTER
+STRING ECHO ********************************* >> product-info.txt
+ENTER
+STRING wmic product get name,version |more >> product-info.txt
+ENTER
+STRING ECHO ********************************* > local-firewall.txt
+ENTER
+STRING ECHO Getting local firewall details... >> local-firewall.txt
+ENTER
+STRING ECHO Running Command:  netsh firewall show config >> local-firewall.txt
+ENTER
+STRING ECHO ********************************* >> local-firewall.txt
+ENTER
+STRING netsh firewall show config >> local-firewall.txt
+ENTER
+STRING ECHO ********************************* >> user-group.txt
+ENTER
+STRING ECHO Getting user, admin, and group information... >> user-group.txt
+ENTER
+STRING ECHO Running Command: net user %USERNAME% /domain, and net localgroup administrators >> user-group.txt
+ENTER
+STRING ECHO ********************************* >> user-group.txt
+ENTER
+ENTER
+STRING ECHO ********************************* >> user-group.txt
+ENTER
+STRING ECHO Getting user information... >> user-group.txt
+ENTER
+STRING ECHO ********************************* >> user-group.txt
+ENTER
+STRING net user %USERNAME% /domain >> user-group.txt
+ENTER
+STRING ECHO ********************************* >> user-group.txt
+ENTER
+STRING ECHO Getting local admins... >> user-group.txt
+ENTER
+STRING ECHO ********************************* >> user-group.txt
+ENTER
+STRING net localgroup administrators >> user-group.txt
+ENTER
+STRING ECHO ********************************* >> user-group.txt
+ENTER
+STRING ECHO Getting local users... >> user-group.txt
+ENTER
+STRING ECHO ********************************* >> user-group.txt
+ENTER
+STRING net user >> user-group.txt
+ENTER
+STRING ECHO ********************************* >> user-group.txt
+ENTER
+STRING ECHO ********************************* >> local-groups.txt
+ENTER
+STRING ECHO Performing local group extraction and members... >> local-groups.txt
+ENTER
+STRING ECHO Running Command: net localgroup >> local-groups.txt
+ENTER
+STRING ECHO ********************************* >> local-groups.txt
+ENTER
+STRING net localgroup >> locals.txt
+ENTER
+STRING type locals.txt >> local-groups.txt
+ENTER
+STRING ECHO ********************************* >> local-groups.txt
+ENTER
+STRING ECHO Performing user mapping to local groups... >> local-groups.txt
+ENTER
+STRING ECHO Running Command: net localgroup in loop >> local-groups.txt
+ENTER
+STRING ECHO ********************************* >> local-groups.txt
+ENTER
+STRING for /f "tokens=* delims=*" %%a in (locals.txt) do net localgroup "%%a" >>local-groups.txt
+ENTER
+STRING ECHO ********************************* >> local-groups.txt
+ENTER
+STRING ECHO Performing user permissions to groups... >> local-groups.txt
+ENTER
+STRING ECHO Running Command: net user in loop >> local-groups.txt
+ENTER
+STRING ECHO ********************************* >> local-groups.txt
+ENTER
+STRING wmic useraccount list brief | find /I "%COMPUTERNAME%" >> local-users.txt
+ENTER
+STRING for /f "tokens=4 delims= " %%a in (local-users.txt) do net user "%%a" >>local-groups.txt
+ENTER
+STRING del locals.txt
+ENTER
+STRING del local-users.txt
+ENTER
+STRING ECHO ********************************* > group-policy.txt
+ENTER
+STRING ECHO Getting group policy information... >> group-policy.txt
+ENTER
+STRING ECHO Running Command: gpresult /Z >> group-policy.txt
+ENTER
+STRING ECHO ********************************* >> group-policy.txt
+ENTER
+STRING gpresult /Z >> group-policy.txt
+ENTER
+STRING ECHO ********************************* >> group-policy.txt
+ENTER
+STRING ECHO Getting authentication account details... >> group-policy.txt
+ENTER
+STRING ECHO Running Command:  net accounts >> group-policy.txt
+ENTER
+STRING ECHO ********************************* >> group-policy.txt
+ENTER
+STRING net accounts >> group-policy.txt
+ENTER
+STRING ECHO ********************************* > netstat-process.txt
+ENTER
+STRING ECHO Get network running details >> netstat-process.txt
+ENTER
+STRING ECHO Running Command: netstat -an >> netstat-process.txt
+ENTER
+STRING ECHO ********************************* >> netstat-process.txt
+ENTER
+STRING ECHO: >> netstat-process.txt
+ENTER
+STRING ECHO Running netstat linked to processes... >> netstat-process.txt
+ENTER
+STRING ECHO ********************************* >> netstat-process.txt
+ENTER
+STRING netstat -an >>netstat-process.txt
+ENTER
+STRING ECHO ********************************* >> services-and-processes.txt
+ENTER
+STRING ECHO Get system services and processes >> services-and-processes.txt
+ENTER
+STRING ECHO Running Commands:  sc query, net start, wmic process list IO >> services-and-processes.txt
+ENTER
+STRING ECHO ********************************* >> services-and-processes.txt
+ENTER
+STRING ECHO ********************************* >> services-and-processes.txt
+ENTER
+STRING ECHO Performing Service Control Manager Output... >> services-and-processes.txt
+ENTER
+STRING ECHO Running Command: sc query >> services-and-processes.txt
+ENTER
+STRING ECHO ********************************* >> services-and-processes.txt
+ENTER
+STRING sc query >> services-and-processes.txt
+ENTER
+STRING ECHO ********************************* >> services-and-processes.txt
+ENTER
+STRING ECHO Performing net start... >> services-and-processes.txt
+ENTER
+STRING ECHO Running Command: net start >> services-and-processes.txt
+ENTER
+STRING ECHO ********************************* >> services-and-processes.txt
+ENTER
+STRING net start >> services-and-processes.txt
+ENTER
+STRING ECHO ********************************* >> services-and-processes.txt
+ENTER
+STRING ECHO Performing full list of processes... >> services-and-processes.txt
+ENTER
+STRING ECHO Running Command:  wmic process list IO >> services-and-processes.txt
+ENTER
+STRING ECHO ********************************* >> services-and-processes.txt
+ENTER
+STRING wmic process list IO |more>> services-and-processes.txt
+ENTER
+STRING ECHO ********************************* >> inactive-services-and-processes.txt
+ENTER
+STRING ECHO Performing inactive service listing... >> inactive-services-and-processes.txt
+ENTER
+STRING ECHO Running Command:  sc query type= service state= inactive>> inactive-services-and-processes.txt
+ENTER
+STRING ECHO ********************************* >> inactive-services-and-processes.txt
+ENTER
+STRING sc query type= service state= inactive >> inactive-services-and-processes.txt
+ENTER
+STRING ECHO ********************************* >> startup-tasks.txt
+ENTER
+STRING ECHO Performing startup tasks... >> startup-tasks.txt
+ENTER
+STRING ECHO Running Command:  wmic startup list full >> startup-tasks.txt
+ENTER
+STRING ECHO ********************************* >> startup-tasks.txt
+ENTER
+STRING wmic startup list full|more >> startup-tasks.txt
+ENTER
+STRING ECHO ********************************* >> scheduled-tasks.txt
+ENTER
+STRING ECHO Performing scheduled tasks... >> scheduled-tasks.txt
+ENTER
+STRING ECHO Running Command:  schtasks >> scheduled-tasks.txt
+ENTER
+STRING ECHO ********************************* >> scheduled-tasks.txt
+ENTER
+STRING schtasks >> scheduled-tasks.txt
+ENTER
+STRING ECHO ********************************* >> running-tasks.txt
+ENTER
+STRING ECHO Performing tasklist... >> running-tasks.txt
+ENTER
+STRING ECHO Running Command:  tasklist>> running-tasks.txt
+ENTER
+STRING ECHO ********************************* >> running-tasks.txt
+ENTER
+STRING tasklist >> running-tasks.txt
+ENTER
+STRING ECHO ********************************* >> running-task-with-services.txt
+ENTER
+STRING ECHO Performing tasklist with services... >> running-task-with-services.txt
+ENTER
+STRING ECHO Running Command:  tasklist /svc >> running-task-with-services.txt
+ENTER
+STRING ECHO ********************************* >> running-task-with-services.txt
+ENTER
+STRING tasklist /svc >> running-task-with-services.txt
+ENTER
+STRING Reg export HKLM\Software\Microsoft\Windows\CurrentVersion\Run Run.reg >nul 2>&1
+ENTER
+STRING Reg export HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce RunOnce.reg >nul 2>&1
+ENTER
+STRING Reg export HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnceEx RunOnceEx.reg >nul 2>&1
+ENTER
+STRING Reg export HKCU\Software\Microsoft\Windows\CurrentVersion\Run UserRun.reg >nul 2>&1
+ENTER
+STRING Reg export HKCU\Software\Microsoft\Windows\CurrentVersion\Run UserRunOnce.reg >nul 2>&1
+ENTER
+STRING Reg export HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnceEx UserRunOnceEX.reg >nul 2>&1
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING ECHO Get Registry Startup Information >> registry-startup.txt
+ENTER
+STRING ECHO Running Command:  Reg export >> registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING ECHO Run.reg >> registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING type Run.reg >> registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING ECHO RunOnce.reg >> registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING type RunOnce.reg >>registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING ECHO RunOnceEx.reg >> registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING type RunOnceEx.reg >>registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING ECHO UserRun.reg >> registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING type UserRun.reg >>registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING ECHO UserRunOnce.reg >> registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING type UserRunOnce.reg >>registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING ECHO UserRunOnceEX.reg >> registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> registry-startup.txt
+ENTER
+STRING type UserRunOnceEX.reg >>registry-startup.txt
+ENTER
+STRING ECHO ********************************* >> system.txt
+ENTER
+STRING ECHO Get System Info and Hotfixes >> system.txt
+ENTER
+STRING ECHO Running Command:  systeminfo >> system.txt
+ENTER
+STRING ECHO ********************************* >> system.txt
+ENTER
+STRING systeminfo >> system.txt
+ENTER
+STRING ECHO ********************************* >> system-patch.txt
+ENTER
+STRING ECHO Get System Patches >> system-patch.txt
+ENTER
+STRING ECHO Running Command:  wmic qfe list >> system-patch.txt
+ENTER
+STRING ECHO ********************************* >> system-patch.txt
+ENTER
+STRING wmic qfe list|more >> system-patch.txt
+ENTER
+STRING ECHO ********************************* >> net-time.txt
+ENTER
+STRING ECHO Getting system time information... >> net-time.txt
+ENTER
+STRING ECHO Running Command:  w32tm /query /configuration >> net-time.txt
+ENTER
+STRING ECHO ********************************* >> net-time.txt
+ENTER
+STRING w32tm /query /configuration >> net-time.txt
+ENTER
+STRING ECHO ********************************* > key-directory-permissions.txt
+ENTER
+STRING ECHO Getting directory permissions for key Windows directories... >> key-directory-permissions.txt
+ENTER
+STRING ECHO Running Command:  icacls (on key directories) >> key-directory-permissions.txt
+ENTER
+STRING ECHO ********************************* >> key-directory-permissions.txt
+ENTER
+STRING ECHO ********************************* >> key-directory-permissions.txt
+ENTER
+STRING icacls c:\windows >> key-directory-permissions.txt
+ENTER
+STRING ECHO ********************************* >> key-directory-permissions.txt
+ENTER
+STRING icacls c:\windows\system >> key-directory-permissions.txt
+ENTER
+STRING ECHO ********************************* >> key-directory-permissions.txt
+ENTER
+STRING icacls c:\windows\system32>> key-directory-permissions.txt
+ENTER
+STRING ECHO ********************************* > shares.txt
+ENTER
+STRING ECHO Getting shared directory information ...>> shares.txt
+ENTER
+STRING ECHO Running Command: net view, and net share>> shares.txt
+ENTER
+STRING ECHO ********************************* >> shares.txt
+ENTER
+STRING ECHO ********************************* >> shares.txt
+ENTER
+STRING ECHO Performing net share... >> shares.txt
+ENTER
+STRING ECHO ********************************* >> shares.txt
+ENTER
+STRING net share >> shared-folders.txt
+ENTER
+STRING type shared-folders.txt >> shares.txt
+ENTER
+STRING ECHO ********************************* >> shares.txt
+ENTER
+STRING ECHO Performing net view \\%COMPUTERNAME%... >> shares.txt
+ENTER
+STRING ECHO ********************************* >> shares.txt
+ENTER
+STRING net view \\%COMPUTERNAME% >> shares.txt
+ENTER
+STRING ECHO ********************************* >> shares.txt
+ENTER
+STRING ECHO Performing loop on shares for access... >> shares.txt
+ENTER
+STRING ECHO ********************************* >> shares.txt
+ENTER
+STRING for /f "tokens=1 delims= " %%a in (shared-folders.txt) do net share %%a >>shares.txt
+ENTER
+STRING ECHO ********************************* >> shares.txt
+ENTER
+STRING ECHO Performing loop on shares for permissions... >> shares.txt
+ENTER
+STRING ECHO Running Command: icacls >> shares.txt
+ENTER
+STRING ECHO ********************************* >> shares.txt
+ENTER
+STRING for /f "tokens=2 delims= " %%a in (shared-folders.txt) do (icacls %%a & ECHO  *********************************) >>shares.txt
+ENTER
+STRING del shared-folders.txt
+ENTER
+STRING ECHO ********************************* > local-log-settings.txt
+ENTER
+STRING ECHO Obtaining local logging information... >> local-log-settings.txt
+ENTER
+STRING ECHO Running Command:  wevtutil gl security, and wevtutil gli security >> local-log-settings.txt
+ENTER
+STRING ECHO ********************************* >> local-log-settings.txt
+ENTER
+STRING ECHO ********************************* >> local-log-settings.txt
+ENTER
+STRING wevtutil gl security >> local-log-settings.txt
+ENTER
+STRING wevtutil gli security >> local-log-settings.txt
+ENTER
+STRING ECHO ********************************* >> local-log-settings.txt
+ENTER
+STRING wevtutil gl system >> local-log-settings.txt
+ENTER
+STRING wevtutil gli system >> local-log-settings.txt
+ENTER
+STRING ECHO ********************************* >> local-log-settings.txt
+ENTER
+STRING wevtutil gl application >> local-log-settings.txt
+ENTER
+STRING wevtutil gli application >> local-log-settings.txt
+ENTER
+STRING type *.txt >> full-audit-file.txt
+ENTER
+STRING del *.reg
+ENTER
+STRING @ECHO Off
+ENTER
+STRING move group* ./Users-Groups >nul 2>&1
+ENTER
+STRING move key-dir* ./System-Configuration >nul 2>&1
+ENTER
+STRING move local-firewall* ./System-Configuration >nul 2>&1
+ENTER
+STRING move local-log* ./Logging >nul 2>&1
+ENTER
+STRING move local-group* ./Users-Groups >nul 2>&1
+ENTER
+STRING move netstat* ./Networking >nul 2>&1
+ENTER
+STRING move net-time* ./System-Configuration >nul 2>&1
+ENTER
+STRING move product* ./System-Configuration >nul 2>&1
+ENTER
+STRING move registry* ./Services-Processes >nul 2>&1
+ENTER
+STRING move inactive* ./Services-Processes >nul 2>&1
+ENTER
+STRING move running* ./Tasks >nul 2>&1
+ENTER
+STRING move schedule* ./Tasks >nul 2>&1
+ENTER
+STRING move services* ./Services-Processes >nul 2>&1
+ENTER
+STRING move shares* ./Networking >nul 2>&1
+ENTER
+STRING move startup* ./Tasks >nul 2>&1
+ENTER
+STRING move system* ./System-Configuration >nul 2>&1
+ENTER
+STRING move user* ./Users-Groups >nul 2>&1
+ENTER
+STRING pause
+ENTER
