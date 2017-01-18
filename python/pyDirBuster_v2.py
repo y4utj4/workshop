@@ -35,8 +35,6 @@ def get_status(site, verbose, outfile, sem):
 	elif response.status == 403:
 		if verbose:
 			print("[!] Forbidden: {0}: {1}".format(site, response.status))
-		if outfile:
-			outfile.write("{0}: {1}".format(site, response.status) + '\n')
 	elif response.status == 404:
 		if verbose:
 			print("[-] Not Found: {0}: {1}".format(site, response.status))
