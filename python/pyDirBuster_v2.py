@@ -1,30 +1,47 @@
 #!/usr/bin/python3
+# Author: Jeremy Schoeneman
+# Thanks to: Coldfusion39 for the help!!
+""" 
+pyDirBuster is a python version of DirBuster which brute forces webdirectories. 
+You'll need your own directory wordlist. 
+"""
+
 import aiohttp
 import argparse
 import asyncio
 import signal
-import sys
 
-async def url_connect(client, site):
-	# Connects to url, gets status
-	async with client.get(site) as response:
-		#print ('\n [+] Status: ' + site + ': ' + str(response.status) + '\n')
-		site_status = response.status
-		return site_status
-
-async def get_status(site, verbose, client):
+@asyncio.coroutine
+def get_status(site, verbose, outfile):
 	# Analyzes the previous status and prints out results
-	status = await url_connect(client, site)
-	if status == 200:
-		print ('[+] FOUND: ' + site + ':' + str(status))
-	if status == 401:
-		print ('[!] Authorization Required ' + site+ ':' + str(status))
-	elif status == 403:
-		print ('[!] Forbidden ' + site+ ':' + str(status))
-	elif status == 404:
-		print ('[-] Not Found ' + site+ ':' + str(status))
-	elif status == 503:
-		print ('[-] Service Unavailable ' + site+ ':' + str(status))
+	response = yield from aiohttp.request('GET', site, compress=True)
+
+	if response.status == 200:
+		if verbose:
+			print("[+] FOUND: {0}: {1}".format(site, response.status))
+		outfile.write("{0}: {1}".format(site, response.status) + '\n')
+	elif 300 < response.status < 308:
+		if verbose:
+			print("[!] Web Redirect: {0}: {1}".format(site, response.status))	
+		outfile.write("{0}: {1}".format(site, response.status) + '\n')
+	elif response.status == 401:
+		if verbose:
+			print("[!] Authorization Required: {0}: {1}".format(site, response.status))
+		outfile.write("{0}: {1}".format(site, response.status) + '\n')
+	elif response.status == 403:
+		if verbose:
+			print("[!] Forbidden: {0}: {1}".format(site, response.status))
+		outfile.write("{0}: {1}".format(site, response.status) + '\n')
+	elif response.status == 404:
+		if verbose:
+			print("[-] Not Found: {0}: {1}".format(site, response.status))
+	elif response.status == 503:
+		if verbose:
+			print("[-] Service Unavailable: {0}: {1}".format(site, response.status))
+	else:
+		if verbose:
+			print("[?] Unknown Response: {0}: {1}".format(site, response.status))
+	yield from response.release()
 
 def signal_handler():
 	print('Stopping all tasks')
@@ -39,28 +56,22 @@ def main():
 	parser.add_argument('-o', '--outfile', help='file to write output')
 	parser.add_argument('-v', '--verbose', help='prints results to screen', action='store_true')
 
-	# Assigning args 
+	# Assigning args
 	args = parser.parse_args()
 	if args.outfile:
 		outfile = open(args.outfile, 'w')
 	url = args.url
 	verbose = args.verbose
-	
+	directories = open(args.wordlist, 'r')
+
 	# Assigning loop and connection
 	loop = asyncio.get_event_loop()
 	loop.add_signal_handler(signal.SIGINT, signal_handler)
-	conn = aiohttp.TCPConnector(verify_ssl=False)
-	client = aiohttp.ClientSession(loop=loop, connector=conn)
-	
-	# Do stuff
-	with open(args.wordlist, 'r') as f:
-		for line in f:
-			directory = line.strip('\n')
-			site = url+directory
-			try:
-				loop.run_until_complete(get_status(site,verbose,client))
-			except asyncio.CancelledError:
-				print('Tasks were canceled')
-	
+	f = asyncio.wait([get_status(url + directory.rstrip('\n'), verbose, outfile) for directory in directories])
+	try:
+		loop.run_until_complete(f)
+	except asyncio.CancelledError:
+		print('Tasks were canceled')
+
 if __name__ == '__main__':
 	main()
