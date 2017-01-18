@@ -12,26 +12,31 @@ import asyncio
 import signal
 
 @asyncio.coroutine
-def get_status(site, verbose, outfile):
+def get_status(site, verbose, outfile, sem):
 	# Analyzes the previous status and prints out results
-	response = yield from aiohttp.request('GET', site, compress=True)
+	with (yield from sem):
+		response = yield from aiohttp.request('GET', site, compress=True)
 
 	if response.status == 200:
 		if verbose:
 			print("[+] FOUND: {0}: {1}".format(site, response.status))
-		outfile.write("{0}: {1}".format(site, response.status) + '\n')
+		if outfile:
+			outfile.write("{0}: {1}".format(site, response.status) + '\n')
 	elif 300 < response.status < 308:
 		if verbose:
 			print("[!] Web Redirect: {0}: {1}".format(site, response.status))	
-		outfile.write("{0}: {1}".format(site, response.status) + '\n')
+		if outfile:
+			outfile.write("{0}: {1}".format(site, response.status) + '\n')
 	elif response.status == 401:
 		if verbose:
 			print("[!] Authorization Required: {0}: {1}".format(site, response.status))
-		outfile.write("{0}: {1}".format(site, response.status) + '\n')
+		if outfile:
+			outfile.write("{0}: {1}".format(site, response.status) + '\n')
 	elif response.status == 403:
 		if verbose:
 			print("[!] Forbidden: {0}: {1}".format(site, response.status))
-		outfile.write("{0}: {1}".format(site, response.status) + '\n')
+		if outfile:
+			outfile.write("{0}: {1}".format(site, response.status) + '\n')
 	elif response.status == 404:
 		if verbose:
 			print("[-] Not Found: {0}: {1}".format(site, response.status))
@@ -41,6 +46,7 @@ def get_status(site, verbose, outfile):
 	else:
 		if verbose:
 			print("[?] Unknown Response: {0}: {1}".format(site, response.status))
+	
 	yield from response.release()
 
 def signal_handler():
@@ -58,6 +64,7 @@ def main():
 
 	# Assigning args
 	args = parser.parse_args()
+	outfile = 0
 	if args.outfile:
 		outfile = open(args.outfile, 'w')
 	url = args.url
@@ -65,10 +72,13 @@ def main():
 	directories = open(args.wordlist, 'r')
 
 	# Assigning loop and connection
+	sem = asyncio.Semaphore(1000)
 	loop = asyncio.get_event_loop()
 	loop.add_signal_handler(signal.SIGINT, signal_handler)
-	f = asyncio.wait([get_status(url + directory.rstrip('\n'), verbose, outfile) for directory in directories])
+
+	f = asyncio.wait([get_status(url + directory.rstrip('\n'), verbose, outfile, sem) for directory in directories])
 	try:
+		
 		loop.run_until_complete(f)
 	except asyncio.CancelledError:
 		print('Tasks were canceled')
