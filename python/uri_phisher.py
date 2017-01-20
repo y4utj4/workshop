@@ -3,6 +3,9 @@ import argparse
 import sys
 from urllib.parse import quote
 
+# Creates a uri phishing page
+## Don't know what to do? Read Rascuache's blog at 'https://warroom.securestate.com/running-data-uri-phishing-campaign-king-phisher'
+
 def escape_url(url, spoofed_url):
 	full_url = 'data:text/html,' + spoofed_url + \
 	'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    '\
