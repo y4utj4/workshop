@@ -4,8 +4,6 @@ import argparse
 import datetime
 import difflib
 import os.path
-import pytz
-import re
 import socket
 import sys
 import webbrowser
@@ -29,13 +27,13 @@ def get_ips_from_range(ipRange):
 	elif '-' in ipRange:
 		# build ending IP from range
 		dashRange = ipRange
-		startIP , endIP = dashRange.split('-')		
+		startIP, endIP = dashRange.split('-')
 		# convert to cidr notation
 		try:
-			cidrIPs = netaddr.iprange_to_cidrs(startIP,endIP)[0]
+			cidrIPs = netaddr.iprange_to_cidrs(startIP, endIP)[0]
 		except netaddr.core.AddrFormatError:
 			print('[-] Invalid IP range specified: ' + ipRange)
-			sys.exit(0) 	
+			sys.exit(0)
 		return cidrIPs
 	else:
 		print('Something went wrong. Check your input ' + ipRange + " caused an error")
@@ -63,7 +61,7 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 			proc.join()
 			break
 	outfile.close()
-	return 
+	return
 
 def dns_reverse_lookup(ip, verbose, outfile, q):
 	try:
@@ -72,16 +70,16 @@ def dns_reverse_lookup(ip, verbose, outfile, q):
 		print(line)
 		if outfile != False:
 			q.put(line)
-	except :
+	except:
 		if verbose:
 			print('[-] Could not resolve: ' + ip)
 			q.put(None)
-	
+
 def compare_results(outfile, htmlfile, prev_scan):
 	now = datetime.datetime.now()
 	newfile = outfile
 	oldfile = prev_scan
-	oldfile_create = "Orig File Created: %s" % datetime.datetime.fromtimestamp(os.path.getmtime(oldfile), ) 
+	oldfile_create = "Orig File Created: %s" % datetime.datetime.fromtimestamp(os.path.getmtime(oldfile))
 	outfile = htmlfile + now.strftime('%d-%b-%Y_%H:%M:%S') + '.html'
 	nowtime_html = '<h3 style="font-style:italic;">' + now.strftime('%d-%b-%Y_%H:%M:%S') + '</h3>'
 	header = """<style>
@@ -139,7 +137,6 @@ def main():
 	else:
 		print('[!] input values are required, please enter a range or specify a file')
 
-#checks for outfile
 	if not args.outfile:
 		print('[!] an outfile must be specified to send the results of the discovery scan')
 		return 0
@@ -148,7 +145,6 @@ def main():
 		outfile = args.outfile + '_'+ now.strftime('%d-%b-%Y_%H:%M:%S')
 		print('[+] writing files to: ', outfile)
 
-#Checks for htmlfile
 	if args.htmlfile and not outfile and not args.previous_scan:
 		print('[!] in order to compare results, you must specify a previous scan, outfile and an htmlfile file')
 	elif args.htmlfile and not args.previous_scan:
@@ -157,34 +153,33 @@ def main():
 		htmlfile = args.htmlfile
 		prev_scan = args.previous_scan
 
-#Verbosity
 	if args.verbose:
 		verbose = True
-	
+
 # Do things
 	if ipRange:
 		ip = get_ips_from_range(ipRange)
 		send_to_lookup(q, verbose, outfile, timeout, ip)
 	elif infile:
-		with open (args.infile, 'r') as f:
+		with open(args.infile, 'r') as f:
 			for line in f:
 				host = line.strip('\n')
 				if '-' in host or '/' in host:
 					host = get_ips_from_range(host)
 					send_to_lookup(q, verbose, outfile, timeout, host)
 				else:
-					dns_reverse_lookup(host,verbose,outfile,q)
+					dns_reverse_lookup(host, verbose, outfile, q)
 			f.close()
 	else:
 		return 0
-	
-	try:	
-		compare_results(outfile, htmlfile, prev_scan )
-		
-	except:
-		print('\n[-] could not complete the comparison' )
 
-	print('[+] Done, happy hunting!' )
+	try:
+		compare_results(outfile, htmlfile, prev_scan)
+
+	except:
+		print('\n[-] could not complete the comparison')
+
+	print('[+] Done, happy hunting!')
 
 if __name__ == '__main__':
 	main()
