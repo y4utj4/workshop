@@ -4,6 +4,7 @@ import argparse
 import datetime
 import difflib
 import os.path
+import pytz
 import re
 import socket
 import sys
@@ -77,11 +78,12 @@ def dns_reverse_lookup(ip, verbose, outfile, q):
 			q.put(None)
 	
 def compare_results(outfile, htmlfile, prev_scan):
+	now = datetime.datetime.now()
 	newfile = outfile
 	oldfile = prev_scan
 	oldfile_create = "Orig File Created: %s" % datetime.datetime.fromtimestamp(os.path.getmtime(oldfile), ) 
-	outfile = htmlfile
-	nowtime_html = '<h3 style="font-style:italic;">' + str(datetime.datetime.now()) + '</h3>'
+	outfile = htmlfile + now.strftime('%d-%b-%Y_%H:%M:%S') + '.html'
+	nowtime_html = '<h3 style="font-style:italic;">' + now.strftime('%d-%b-%Y_%H:%M:%S') + '</h3>'
 	header = """<style>
 			  body{text-align:center; background:#EEE; width:80%; margin:0 auto;}
 			  table{margin:0 auto; width:auto;}
@@ -103,19 +105,20 @@ def compare_results(outfile, htmlfile, prev_scan):
 		doc.write(d)
 		doc.close()
 		print ('\n[+] HTML report has been sucessfully written to: ', htmlfile)
+		try:
+			webbrowser.open(outfile)
+		except:
+			return
 	return
 
 def main():
 	#Set up arguments
-	parser = argparse.ArgumentParser(description='Host discovery scan using ICMP Ping requests with previous scan comparison')
-#ins
+	parser = argparse.ArgumentParser(description='Host discovery scan using ICMP Ping requests with previous scan comparison.')
 	parser.add_argument('-r', '--range', help='IP range to check. i.e. 192.168.1.0/24 or 192.168.1.0-255', default=None)
 	parser.add_argument('-i', '--infile', help='file to read scope from. Preferably used when multiple ranges are needed')
-	parser.add_argument('-p', '--previous_scan', help='previous discovery results to compare in txt format')
-#outs
-	parser.add_argument('-o', '--outfile', help='file to export results from discovery')
-	parser.add_argument('-H', '--htmlfile', help='HTML file to export the differences between scans')
-#misc
+	parser.add_argument('-p', '--previous_scan', help='previous discovery results to compare')
+	parser.add_argument('-o', '--outfile', help='filename to export results from discovery')
+	parser.add_argument('-H', '--htmlfile', help='HTML filename to export the differences between scans')
 	parser.add_argument('-t', '--timeout', help='time in seconds to wait for lookup to complete, default is 5.', default=5)
 	parser.add_argument('-v', '--verbose', help='show verbose output', action='store_true')
 	args = parser.parse_args()
@@ -141,7 +144,8 @@ def main():
 		print('[!] an outfile must be specified to send the results of the discovery scan')
 		return 0
 	else:
-		outfile = args.outfile
+		now = datetime.datetime.now()
+		outfile = args.outfile + '_'+ now.strftime('%d-%b-%Y_%H:%M:%S')
 		print('[+] writing files to: ', outfile)
 
 #Checks for htmlfile
@@ -176,12 +180,9 @@ def main():
 	
 	try:	
 		compare_results(outfile, htmlfile, prev_scan )
-		try:
-			webbrowser.open(htmlfile)
-		except:
-			return
+		
 	except:
-		print('[-] something with the comparison went wrong' )
+		print('\n[-] could not complete the comparison' )
 
 	print('[+] Done, happy hunting!' )
 
