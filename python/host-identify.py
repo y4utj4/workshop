@@ -76,11 +76,13 @@ def dns_reverse_lookup(ip, verbose, outfile, q):
 			q.put(None)
 
 def compare_results(outfile, htmlfile, prev_scan):
+	sys.setrecursionlimit(50000)
 	now = datetime.datetime.now()
 	newfile = outfile
-	oldfile = prev_scan
-	oldfile_create = "Orig File Created: %s" % datetime.datetime.fromtimestamp(os.path.getmtime(oldfile))
 	outfile = htmlfile + now.strftime('%d-%b-%Y_%H:%M:%S') + '.html'
+	oldfile = prev_scan
+	oldfile_header = "Orig File: %s" % oldfile
+	newfile_header = "New File: %s" % outfile
 	nowtime_html = '<h3 style="font-style:italic;">' + now.strftime('%d-%b-%Y_%H:%M:%S') + '</h3>'
 	header = """<style>
 			  body{text-align:center; background:#EEE; width:80%; margin:0 auto;}
@@ -96,7 +98,7 @@ def compare_results(outfile, htmlfile, prev_scan):
 			  <div class="clear"</clear>"""
 
 	diff = difflib.HtmlDiff()
-	d = diff.make_file(open(oldfile).readlines(), open(newfile).readlines(), fromdesc=oldfile_create, todesc="New", context=True, numlines=0)
+	d = diff.make_file(open(oldfile).readlines(), open(newfile).readlines(), fromdesc=oldfile_header, todesc=newfile_header, context=True, numlines=0)
 	with open(outfile, 'w+') as doc:
 		doc.write(header)
 		doc.write(nowtime_html)
@@ -175,7 +177,6 @@ def main():
 
 	try:
 		compare_results(outfile, htmlfile, prev_scan)
-
 	except:
 		print('\n[-] could not complete the comparison')
 

