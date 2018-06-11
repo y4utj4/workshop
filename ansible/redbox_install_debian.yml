@@ -1,0 +1,117 @@
+- hosts: localhost
+  become: yes
+  gather_facts: False
+  vars_prompt:
+    - name: "uname"
+      prompt: "Enter Username"
+
+  tasks:
+  - name: Updating Ubuntu System
+    apt: upgrade=dist update_cache=yes  
+  
+  - name: Install dependencies from Ubuntu Repos
+    apt: name=* state=present
+    with_items:
+      - build-essential
+      - git
+      - vim
+      - openssl
+      - z1lib1g-dev
+
+  - name: Installing python dependencies
+    apt: name=* state=present
+    with_items:
+      - python3
+      - python3-dev
+      - python-dev
+      - python-pip
+      - python3-pip
+  
+  - name: Install tools from repos
+    apt: name=* state=present
+    with_items:
+      - nmap
+      - wine-stable
+      - john
+      - wireshark
+      - aircrack-ng
+      - zsh
+      - curl
+      - nikto
+
+  - name: Creates filepaths to store github tools and scripts 
+    file: 
+      path: /opt/metasploit-framework
+      state: directory
+      mode: 0755
+      owner: "{{uname}}"
+  - file:
+      path: /opt/Empire
+      state: directory
+      mode: 0755
+      owner: "{{uname}}"
+  - file:
+      path: /home/"{{uname}}"/tools
+      state: directory
+      mode: 0755
+      owner: "{{uname}}"
+  - file:
+      path: /home/"{{uname}}"/tools/recon
+      state: directory
+      mode: 0755
+      owner: "{{uname}}"
+  - file:
+      path: /home/"{{uname}}"/tools/pentesting
+      state: directory
+      mode: 0755
+      owner: "{{uname}}"
+  - file:
+      path: /home/"{{uname}}"/tools/scanning
+      state: directory
+      mode: 0755
+      owner: "{{uname}}"
+  - file:
+      path: /home/"{{uname}}"/tools/social_engineering
+      state: directory
+      mode: 0755
+      owner: "{{uname}}"
+  - file:
+      path: /home/"{{uname}}"/tools/misc
+      state: directory
+      mode: 0755
+      owner: "{{uname}}"
+
+  - name: Pulls github repos
+    git:
+      repo: https://github.com/rapid7/metasploit-framework.git
+      dest: /opt/metasploit-framework
+  - git:
+      repo: https://github.com/EmpireProject/Empire.git
+      dest: /opt/Empire
+  - git:
+      repo: https://github.com/aboul3la/Sublist3r.git
+      dest: /home/"{{uname}}"/tools/recon
+  - git:
+      repo: https://github.com/securestate/king-phisher
+      dest: /home/"{{uname}}"/tools/social_engineering
+  - git:
+      repo: https://github.com/securestate/king-phisher-plugins
+      dest: /home/"{{uname}}"/tools/social_engineering
+  - git:
+      repo: https://github.com/beefproject/beef.git
+      dest: /home/"{{uname}}"/tools/social_engineering
+  - git: 
+      repo: https://github.com/rbsec/sslscan.git
+      dest: /home/"{{uname}}"/tools/scanning
+  - git:
+      repo: https://github.com/hashcat/hashcat.git
+      dest: /home/"{{uname}}"/tools/pentesting
+  - git:
+      repo: https://github.com/BloodHoundAD/BloodHound.git
+      dest: /home/"{{uname}}"/tools/pentesting
+  - git:
+      repo: https://github.com/sqlmapproject/sqlmap.git
+      dest: /home/"{{uname}}"/tools/pentesting
+  - git:
+      repo: https://github.com/zeroSteiner/AdvancedHTTPServer.git
+      dest: /home/"{{uname}}"/tools/misc
