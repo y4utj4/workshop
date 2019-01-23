@@ -40,16 +40,16 @@ def get_ips_from_range(ipRange):
 		sys.exit(0)
 
 def send_to_lookup(q, verbose, outfile, timeout, hosts):
-	outfile = open(outfile, 'w')
+#	outfile = open(outfile, 'w')
 	for ip in hosts:
 		try:
 			ip = str(ip)
 			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q))
 			proc.start()
-			if outfile != False:
-				line = q.get()
-				if line != None:
-					outfile.write(line + '\n')
+#			if outfile != False:
+#				line = q.get()
+#				if line != None:
+#					outfile.write(line + '\n')
 			proc.join(timeout)
 			if proc.is_alive():
 				print('[!] Lookup timeout exceeded for: ' + ip)
@@ -64,12 +64,14 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 	return
 
 def dns_reverse_lookup(ip, verbose, outfile, q):
+	outfile = open(outfile, 'w')
 	try:
 		host = socket.gethostbyaddr(ip)
 		line = ip + ' - ' + host[0]
 		print(line)
 		if outfile != False:
 			q.put(line)
+			outfile.write(line + '\n')
 	except:
 		if verbose:
 			print('[-] Could not resolve: ' + ip)
@@ -92,8 +94,7 @@ def compare_results(outfile, htmlfile, prev_scan):
 			  .clear{clear:both}
 			  </style>
 			  <div class="heading">
-			  <img src="http://www.bridgestone.com/etc/images/logos/bridgestone-logo-set-en.png" style="float:left; margin-top:10px;" />
-			  <h1 style="float:left; width:50%;">Host Discovery and Comparison</h1>
+			  <h1 style="float:left; width:50%;">Key Bank <br />Host Discovery and Comparison</h1>
 			  </div>
 			  <div class="clear"</clear>"""
 
@@ -119,7 +120,7 @@ def main():
 	parser.add_argument('-p', '--previous_scan', help='previous discovery results to compare')
 	parser.add_argument('-o', '--outfile', help='filename to export results from discovery')
 	parser.add_argument('-H', '--htmlfile', help='HTML filename to export the differences between scans')
-	parser.add_argument('-t', '--timeout', help='time in seconds to wait for lookup to complete, default is 5.', default=5)
+	parser.add_argument('-t', '--timeout', help='time in seconds to wait for lookup to complete, default is 5.', default=2)
 	parser.add_argument('-v', '--verbose', help='show verbose output', action='store_true')
 	args = parser.parse_args()
 
