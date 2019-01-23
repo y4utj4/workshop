@@ -40,7 +40,7 @@ def get_ips_from_range(ipRange):
 		sys.exit(0)
 
 def send_to_lookup(q, verbose, outfile, timeout, hosts):
-#	outfile = open(outfile, 'w')
+	outfile = open(outfile, 'w')
 	for ip in hosts:
 		try:
 			ip = str(ip)
@@ -64,7 +64,7 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 	return
 
 def dns_reverse_lookup(ip, verbose, outfile, q):
-	outfile = open(outfile, 'w')
+	
 	try:
 		host = socket.gethostbyaddr(ip)
 		line = ip + ' - ' + host[0]
