@@ -49,7 +49,7 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 			line = q.get()
 			if line != None:
 				outfile.write(line + '\n')
-			proc.join(timeout)
+				proc.join(timeout)
 			if proc.is_alive():
 				print('[!] Lookup timeout exceeded for: ' + ip)
 				proc.terminate()
@@ -114,17 +114,16 @@ def main():
 	parser.add_argument('-r', '--range', help='IP range to check. i.e. 192.168.1.0/24 or 192.168.1.0-255', default=None)
 	parser.add_argument('-i', '--infile', help='file to read scope from. Preferably used when multiple ranges are needed')
 	parser.add_argument('-p', '--previous_scan', help='previous discovery results to compare')
-	parser.add_argument('-o', '--outfile', help='filename to export results from discovery')
+	parser.add_argument('-o', '--outfile', help='filename to export results from discovery', required=True)
 	parser.add_argument('-H', '--htmlfile', help='HTML filename to export the differences between scans')
 	parser.add_argument('-t', '--timeout', help='time in seconds to wait for lookup to complete, default is 5.', default=2)
-	parser.add_argument('-v', '--verbose', help='show verbose output', action='store_true')
+	parser.add_argument('-v', '--verbose', help='show verbose output', action='store_true', default=False)
 	args = parser.parse_args()
 
 #Declaring Variables
 	timeout = int(args.timeout)
 	outfile = False
 	infile = False
-	verbose = True
 	ipRange = False
 	q = Queue()
 
