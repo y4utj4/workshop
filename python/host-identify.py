@@ -117,7 +117,7 @@ def main():
 	parser.add_argument('-o', '--outfile', help='filename to export results from discovery', required=True)
 	parser.add_argument('-H', '--htmlfile', help='HTML filename to export the differences between scans')
 	parser.add_argument('-t', '--timeout', help='time in seconds to wait for lookup to complete, default is 5.', default=2)
-	parser.add_argument('-v', '--verbose', help='show verbose output', action='store_true', default=False)
+	parser.add_argument('-v', '--verbose', help='show verbose output', action='store_true')
 	args = parser.parse_args()
 
 #Declaring Variables
@@ -125,6 +125,7 @@ def main():
 	outfile = False
 	infile = False
 	ipRange = False
+	verbose = False
 	q = Queue()
 
 # Conditional Variables
