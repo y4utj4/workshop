@@ -40,7 +40,7 @@ def get_ips_from_range(ipRange):
 		sys.exit(0)
 
 def send_to_lookup(q, verbose, outfile, timeout, hosts):
-	outfile = outfile.open(outfile, 'a+')
+	outfile = open(outfile, 'a+')
 	for ip in hosts:
 		try:
 			ip = str(ip)
@@ -130,8 +130,6 @@ def main():
 	verbose = True
 	ipRange = False
 	q = Queue()
-
-	
 
 # Conditional Variables
 	if args.range:
