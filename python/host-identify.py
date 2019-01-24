@@ -40,15 +40,10 @@ def get_ips_from_range(ipRange):
 		sys.exit(0)
 
 def send_to_lookup(q, verbose, outfile, timeout, hosts):
-	
 	for ip in hosts:
-		outfile = open(outfile, 'w')
 		try:
-
-			
-			
 			ip = str(ip)
-			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q))
+			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, q))
 			proc.start()
 			line = q.get()
 			if line != None:
@@ -63,10 +58,10 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 			proc.terminate()
 			proc.join()
 			break
-		outfile.close()
+	
 	return
 
-def dns_reverse_lookup(ip, verbose, outfile, q):
+def dns_reverse_lookup(ip, verbose, q):
 	try:
 		host = socket.gethostbyaddr(ip)
 		line = ip + ' - ' + host[0]
@@ -131,6 +126,7 @@ def main():
 	ipRange = False
 	verbose = False
 	q = Queue()
+	outfile = open(outfile, 'w')
 
 # Conditional Variables
 	if args.range:
@@ -183,6 +179,7 @@ def main():
 		except:
 			print('\n[-] could not complete the comparison')
 
+	outfile.close()
 	print('[+] Done, happy hunting!')
 
 if __name__ == '__main__':
