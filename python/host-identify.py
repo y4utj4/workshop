@@ -128,7 +128,7 @@ def main():
 	ipRange = False
 	verbose = False
 	q = Queue()
-	outfile = open(outfile, 'w')
+	
 
 # Conditional Variables
 	if args.range:
@@ -159,11 +159,13 @@ def main():
 
 # Do things
 	if ipRange:
+		outfile = open(outfile, 'w')
 		ip = get_ips_from_range(ipRange)
 		results = send_to_lookup(q, verbose, outfile, timeout, ip)
 		outfile.write(results)
 	elif infile:
 		with open(args.infile, 'r') as f:
+			outfile = open(outfile, 'w')
 			for line in f:
 				host = line.strip('\n')
 				if '-' in host or '/' in host:
