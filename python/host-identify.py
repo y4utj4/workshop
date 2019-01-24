@@ -166,8 +166,6 @@ def main():
 		if results != None:
 			outfile.write(results)
 			print(results)
-		else:
-			pass
 			
 	elif infile:
 		outfile = open(outfile, 'w')
