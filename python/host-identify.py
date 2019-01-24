@@ -165,12 +165,12 @@ def main():
 	elif infile:
 		with open(args.infile, 'r') as f:
 			for line in f:
-				host = line.strip('\n')
-				if '-' in host or '/' in host:
-					host = get_ips_from_range(host)
-					send_to_lookup(q, verbose, outfile, timeout, host)
+				address = line.strip('\n')
+				if '-' in address or '/' in address:
+					hosts = get_ips_from_range(address)
+					send_to_lookup(q, verbose, outfile, timeout, hosts)
 				else:
-					dns_reverse_lookup(host, verbose, outfile, q)
+					dns_reverse_lookup(address, verbose, outfile, q)
 			f.close()
 	else:
 		return 0
