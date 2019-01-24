@@ -58,15 +58,12 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 				print('[!] Lookup timeout exceeded for: ' + ip)
 				proc.terminate()
 				proc.join()
-			
-		outfile.close()
-		
 		except KeyboardInterrupt:
 			print('\n[!] Kill signal detected, shutting down.')
 			proc.terminate()
 			proc.join()
 			break
-		
+		outfile.close()
 	return
 
 def dns_reverse_lookup(ip, verbose, outfile, q):
