@@ -47,9 +47,10 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, q))
 			proc.start()
 			line = q.get()
+			results = []
 			if line != None:
 #				outfile.write(line + '\n')
-				return(line)
+				results.append(line)
 			proc.join(timeout)
 			if proc.is_alive():
 				print('[!] Lookup timeout exceeded for: ' + ip)
