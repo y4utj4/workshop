@@ -44,9 +44,9 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 	for ip in hosts:
 		try:
 			ip = str(ip)
-			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q, line))
+			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q))
 			proc.start()
-			line = q.get()
+#			line = q.get()
 #			if line != None:
 #				outfile.write(line + '\n')
 			proc.join(timeout)
@@ -62,23 +62,19 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 #	outfile.close()
 	return
 
-def dns_reverse_lookup(ip, verbose, outfile, q, line):
+def dns_reverse_lookup(ip, verbose, outfile, q):
 	outfile = open(outfile, 'w')
-	line = q.get()
-
 	try:
 		host = socket.gethostbyaddr(ip)
 		line = ip + ' - ' + host[0]
 		print(line)
-		q.put(line)
+#		q.put(line)
+		oufile.write(line + '\n')
 	except:
 		if verbose:
 			print('[-] Could not resolve: ' + ip)
-			q.put(None)
-	if line != None:
-				outfile.write(line + '\n')
+#			q.put(None)
 	outfile.close()
-
 def compare_results(outfile, htmlfile, prev_scan):
 	sys.setrecursionlimit(50000)
 	now = datetime.datetime.now()
@@ -178,10 +174,12 @@ def main():
 	else:
 		return 0
 
-	try:
-		compare_results(outfile, htmlfile, prev_scan)
-	except:
-		print('\n[-] could not complete the comparison')
+	
+	if htmlfile:
+		try:
+			compare_results(outfile, htmlfile, prev_scan)
+		except:
+			print('\n[-] could not complete the comparison')
 
 	print('[+] Done, happy hunting!')
 
