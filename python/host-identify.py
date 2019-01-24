@@ -40,7 +40,7 @@ def get_ips_from_range(ipRange):
 		sys.exit(0)
 
 def send_to_lookup(q, verbose, outfile, timeout, hosts):
-	
+	outfile.open(outfile, 'a+')
 	for ip in hosts:
 		try:
 			ip = str(ip)
@@ -60,7 +60,7 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 			proc.terminate()
 			proc.join()
 			break
-#	outfile.close()
+	outfile.close()
 	return
 
 def dns_reverse_lookup(ip, verbose, outfile, q):
@@ -147,7 +147,6 @@ def main():
 	else:
 		now = datetime.datetime.now()
 		outfile = args.outfile + '_'+ now.strftime('%d-%b-%Y_%H:%M:%S')
-		outfile = open(outfile, 'w')
 		print('[+] writing files to: ', outfile)
 
 	if args.htmlfile and not outfile and not args.previous_scan:
@@ -183,7 +182,6 @@ def main():
 	except:
 		print('\n[-] could not complete the comparison')
 
-	outfile.close()
 	print('[+] Done, happy hunting!')
 
 if __name__ == '__main__':
