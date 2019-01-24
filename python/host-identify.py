@@ -46,10 +46,10 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 			ip = str(ip)
 			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q))
 			proc.start()
-#			if outfile != False:
-#				line = q.get()
-#				if line != None:
-#					outfile.write(line + '\n')
+			if outfile != False:
+				line = q.get()
+				if line != None:
+					outfile.write(line + '\n')
 			proc.join(timeout)
 			if proc.is_alive():
 				print('[!] Lookup timeout exceeded for: ' + ip)
@@ -64,14 +64,12 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 	return
 
 def dns_reverse_lookup(ip, verbose, outfile, q):
-	
 	try:
 		host = socket.gethostbyaddr(ip)
 		line = ip + ' - ' + host[0]
 		print(line)
 		if outfile != False:
 			q.put(line)
-			outfile.write(line + '\n')
 	except:
 		if verbose:
 			print('[-] Could not resolve: ' + ip)
