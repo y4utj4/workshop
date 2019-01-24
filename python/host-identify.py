@@ -40,41 +40,45 @@ def get_ips_from_range(ipRange):
 		sys.exit(0)
 
 def send_to_lookup(q, verbose, outfile, timeout, hosts):
-#	outfile = open(outfile, 'w')
+	
 	for ip in hosts:
 		try:
+
+			outfile = open(outfile, 'w')
+			
 			ip = str(ip)
 			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q))
 			proc.start()
-#			line = q.get()
-#			if line != None:
-#				outfile.write(line + '\n')
+			line = q.get()
+			if line != None:
+				outfile.write(line + '\n')
 			proc.join(timeout)
 			if proc.is_alive():
 				print('[!] Lookup timeout exceeded for: ' + ip)
 				proc.terminate()
 				proc.join()
+			
+			outfile.close()
+		
 		except KeyboardInterrupt:
 			print('\n[!] Kill signal detected, shutting down.')
 			proc.terminate()
 			proc.join()
 			break
-#	outfile.close()
+		
 	return
 
 def dns_reverse_lookup(ip, verbose, outfile, q):
-	outfile = open(outfile, 'w')
 	try:
 		host = socket.gethostbyaddr(ip)
 		line = ip + ' - ' + host[0]
 		print(line)
-#		q.put(line)
-		oufile.write(line + '\n')
+		q.put(line)
 	except:
 		if verbose:
 			print('[-] Could not resolve: ' + ip)
-#			q.put(None)
-	outfile.close()
+			q.put(None)
+
 def compare_results(outfile, htmlfile, prev_scan):
 	sys.setrecursionlimit(50000)
 	now = datetime.datetime.now()
