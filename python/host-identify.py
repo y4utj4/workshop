@@ -50,7 +50,7 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 			results = []
 			if line != None:
 #				outfile.write(line + '\n')
-				results.append(line)
+				results.append(str(line))
 			proc.join(timeout)
 			if proc.is_alive():
 				print('[!] Lookup timeout exceeded for: ' + ip)
@@ -172,12 +172,13 @@ def main():
 				if '-' in host or '/' in host:
 					host = get_ips_from_range(host)
 					results = send_to_lookup(q, verbose, outfile, timeout, host)
-					print('\n [+] IPs found:')
 				else:
 					dns_reverse_lookup(host, verbose, outfile, q)
 			f.close()
-			print(results)
-			outfile.write(results)	
+			if results != None:
+				print('\n [+] IPs found:')
+				print(results)
+				outfile.write(results)	
 	else:
 		return 0
 
