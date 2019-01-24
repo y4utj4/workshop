@@ -40,17 +40,16 @@ def get_ips_from_range(ipRange):
 		sys.exit(0)
 
 def send_to_lookup(q, verbose, outfile, timeout, hosts):
-#	outfile = open(outfile, 'w')
+	outfile = open(outfile, 'w')
 	for ip in hosts:
 		try:
 			ip = str(ip)
-			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, q))
+			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q))
 			proc.start()
-			line = q.get()
-			results = []
-			if line != None:
-#				outfile.write(line + '\n')
-				results.append(line)
+			if outfile != False:
+				line = q.get()
+				if line != None:
+					outfile.write(line + '\n')
 			proc.join(timeout)
 			if proc.is_alive():
 				print('[!] Lookup timeout exceeded for: ' + ip)
@@ -61,15 +60,16 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 			proc.terminate()
 			proc.join()
 			break
-#	outfile.close()
+	outfile.close()
 	return
 
-def dns_reverse_lookup(ip, verbose, q):
+def dns_reverse_lookup(ip, verbose, outfile, q):
 	try:
 		host = socket.gethostbyaddr(ip)
 		line = ip + ' - ' + host[0]
 		print(line)
-		q.put(line)
+		if outfile != False:
+			q.put(line)
 	except:
 		if verbose:
 			print('[-] Could not resolve: ' + ip)
@@ -92,7 +92,8 @@ def compare_results(outfile, htmlfile, prev_scan):
 			  .clear{clear:both}
 			  </style>
 			  <div class="heading">
-			  <h1 style="float:left; width:50%;">Key Bank <br />Host Discovery and Comparison</h1>
+			  <img src="http://www.bridgestone.com/etc/images/logos/bridgestone-logo-set-en.png" style="float:left; margin-top:10px;" />
+			  <h1 style="float:left; width:50%;">Host Discovery and Comparison</h1>
 			  </div>
 			  <div class="clear"</clear>"""
 
@@ -116,9 +117,9 @@ def main():
 	parser.add_argument('-r', '--range', help='IP range to check. i.e. 192.168.1.0/24 or 192.168.1.0-255', default=None)
 	parser.add_argument('-i', '--infile', help='file to read scope from. Preferably used when multiple ranges are needed')
 	parser.add_argument('-p', '--previous_scan', help='previous discovery results to compare')
-	parser.add_argument('-o', '--outfile', help='filename to export results from discovery', required=True)
+	parser.add_argument('-o', '--outfile', help='filename to export results from discovery')
 	parser.add_argument('-H', '--htmlfile', help='HTML filename to export the differences between scans')
-	parser.add_argument('-t', '--timeout', help='time in seconds to wait for lookup to complete, default is 5.', default=2)
+	parser.add_argument('-t', '--timeout', help='time in seconds to wait for lookup to complete, default is 5.', default=5)
 	parser.add_argument('-v', '--verbose', help='show verbose output', action='store_true')
 	args = parser.parse_args()
 
@@ -126,10 +127,9 @@ def main():
 	timeout = int(args.timeout)
 	outfile = False
 	infile = False
+	verbose = True
 	ipRange = False
-	verbose = False
 	q = Queue()
-	
 
 # Conditional Variables
 	if args.range:
@@ -160,36 +160,26 @@ def main():
 
 # Do things
 	if ipRange:
-		outfile = open(outfile, 'w')
 		ip = get_ips_from_range(ipRange)
-		results = send_to_lookup(q, verbose, outfile, timeout, ip)
-		if results != None:
-			outfile.write(results)
-			print(results)
-			
+		send_to_lookup(q, verbose, outfile, timeout, ip)
 	elif infile:
-		outfile = open(outfile, 'w')
 		with open(args.infile, 'r') as f:
 			for line in f:
 				host = line.strip('\n')
 				if '-' in host or '/' in host:
 					host = get_ips_from_range(host)
-					results = send_to_lookup(q, verbose, outfile, timeout, host)
-
+					send_to_lookup(q, verbose, outfile, timeout, host)
 				else:
 					dns_reverse_lookup(host, verbose, outfile, q)
-			f.close()	
+			f.close()
 	else:
 		return 0
 
-	
-	if htmlfile:
-		try:
-			compare_results(outfile, htmlfile, prev_scan)
-		except:
-			print('\n[-] could not complete the comparison')
+	try:
+		compare_results(outfile, htmlfile, prev_scan)
+	except:
+		print('\n[-] could not complete the comparison')
 
-	outfile.close()
 	print('[+] Done, happy hunting!')
 
 if __name__ == '__main__':
