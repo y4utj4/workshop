@@ -172,7 +172,9 @@ def main():
 				if '-' in host or '/' in host:
 					host = get_ips_from_range(host)
 					results = send_to_lookup(q, verbose, outfile, timeout, host)
-					outfile.write(results)
+					print('\n [+] IPs found:')
+				print(results)
+				outfile.write(results)
 				else:
 					dns_reverse_lookup(host, verbose, outfile, q)
 			f.close()
