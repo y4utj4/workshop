@@ -165,19 +165,19 @@ def main():
 		results = send_to_lookup(q, verbose, outfile, timeout, ip)
 		outfile.write(results)
 	elif infile:
+		outfile = open(outfile, 'w')
 		with open(args.infile, 'r') as f:
-			outfile = open(outfile, 'w')
 			for line in f:
 				host = line.strip('\n')
 				if '-' in host or '/' in host:
 					host = get_ips_from_range(host)
 					results = send_to_lookup(q, verbose, outfile, timeout, host)
 					print('\n [+] IPs found:')
-				print(results)
-				outfile.write(results)
 				else:
 					dns_reverse_lookup(host, verbose, outfile, q)
 			f.close()
+			print(results)
+			outfile.write(results)	
 	else:
 		return 0
 
