@@ -42,9 +42,10 @@ def get_ips_from_range(ipRange):
 def send_to_lookup(q, verbose, outfile, timeout, hosts):
 	
 	for ip in hosts:
+		outfile = open(outfile, 'w')
 		try:
 
-			outfile = open(outfile, 'w')
+			
 			
 			ip = str(ip)
 			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q))
@@ -58,7 +59,7 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 				proc.terminate()
 				proc.join()
 			
-			outfile.close()
+		outfile.close()
 		
 		except KeyboardInterrupt:
 			print('\n[!] Kill signal detected, shutting down.')
