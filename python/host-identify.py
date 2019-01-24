@@ -44,9 +44,9 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 	for ip in hosts:
 		try:
 			ip = str(ip)
-			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q))
+			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q, line))
 			proc.start()
-#			line = q.get()
+			line = q.get()
 #			if line != None:
 #				outfile.write(line + '\n')
 			proc.join(timeout)
@@ -62,7 +62,7 @@ def send_to_lookup(q, verbose, outfile, timeout, hosts):
 #	outfile.close()
 	return
 
-def dns_reverse_lookup(ip, verbose, outfile, q):
+def dns_reverse_lookup(ip, verbose, outfile, q, line):
 	outfile = open(outfile, 'w')
 	line = q.get()
 
