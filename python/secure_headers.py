@@ -21,12 +21,12 @@ def parse_headers(r, url):
 	secure_headers = ("X-Frame-Options", 
 		"X-XSS-Protection" , 
 		"x-content-type-options",
-		"Content-Type",
-		"Server",
-		"X-Powered-By",
-		"X-AspNet-Version",
+#		"Content-Type",
+#		"Server",
+#		"X-Powered-By",
+#		"X-AspNet-Version",
 		"Access-Control-Allow-Origin",
-		"Content-Security-Policy",
+#		"Content-Security-Policy",
 		'HTTP-Strict-Transport-Security'
 		)
 	
