@@ -1,191 +1,186 @@
-<<<<<<< HEAD
-=======
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import argparse
 import datetime
 import difflib
-import os.path
+import os
 import socket
 import sys
 import webbrowser
 
-from multiprocessing import Process, Queue
-
 try:
-	import netaddr
+    import netaddr
 except ImportError:
-	print('[-] You need to install the "netaddr" module.  Get it with "pip install netaddr".')
-	sys.exit(0)
+    print('You need to install the "netaddr" module. Run: pip install netaddr')
+    sys.exit(1)
 
-def get_ips_from_range(ipRange):
-	if '/' in ipRange:
-		try:
-			cidrIPs = netaddr.IPNetwork(ipRange)
-		except netaddr.core.AddrFormatError:
-			print('[-] Invalid IP cidr specified: ' + ipRange)
-			sys.exit(0)
-		return cidrIPs
-	elif '-' in ipRange:
-		# build ending IP from range
-		dashRange = ipRange
-		startIP, endIP = dashRange.split('-')
-		# convert to cidr notation
-		try:
-			cidrIPs = netaddr.iprange_to_cidrs(startIP, endIP)[0]
-		except netaddr.core.AddrFormatError:
-			print('[-] Invalid IP range specified: ' + ipRange)
-			sys.exit(0)
-		return cidrIPs
-	else:
-		print('Something went wrong. Check your input ' + ipRange + " caused an error")
-		sys.exit(0)
 
-def send_to_lookup(q, verbose, outfile, timeout, hosts):
-	outfile = outfile.open(outfile, 'a+')
-	for ip in hosts:
-		try:
-			ip = str(ip)
-			proc = Process(target=dns_reverse_lookup, args=(ip, verbose, outfile, q))
-			proc.start()
-			if outfile != False:
-				line = q.get()
-				if line != None:
-					outfile.write(line + '\n')
-			proc.join(timeout)
-			if proc.is_alive():
-				print('[!] Lookup timeout exceeded for: ' + ip)
-				proc.terminate()
-				proc.join()
-		except KeyboardInterrupt:
-			print('\n[!] Kill signal detected, shutting down.')
-			proc.terminate()
-			proc.join()
-			break
-	outfile.close()
-	return
+def iter_ips_from_range(spec):
+    spec = spec.strip()
+    if '/' in spec:
+        try:
+            return (str(ip) for ip in netaddr.IPNetwork(spec))
+        except netaddr.core.AddrFormatError:
+            print('Invalid CIDR: ' + spec)
+            sys.exit(1)
+    if '-' in spec:
+        left, right = spec.split('-', 1)
+        left = left.strip()
+        right = right.strip()
+        if '.' not in right:
+            parts = left.split('.')
+            if len(parts) != 4:
+                print('Invalid range: ' + spec)
+                sys.exit(1)
+            parts[-1] = right
+            right = '.'.join(parts)
+        try:
+            return (str(ip) for ip in netaddr.iter_iprange(left, right))
+        except netaddr.core.AddrFormatError:
+            print('Invalid IP range: ' + spec)
+            sys.exit(1)
+    try:
+        netaddr.IPAddress(spec)
+        return iter([spec])
+    except netaddr.core.AddrFormatError:
+        print('Bad input: ' + spec)
+        sys.exit(1)
 
-def dns_reverse_lookup(ip, verbose, outfile, q):
-	try:
-		host = socket.gethostbyaddr(ip)
-		line = ip + ' - ' + host[0]
-		print(line)
-		if outfile != False:
-			q.put(line)
-	except:
-		if verbose:
-			print('[-] Could not resolve: ' + ip)
-			q.put(None)
 
-def compare_results(outfile, htmlfile, prev_scan):
-	sys.setrecursionlimit(50000)
-	now = datetime.datetime.now()
-	newfile = outfile
-	outfile = htmlfile + now.strftime('%d-%b-%Y_%H:%M:%S') + '.html'
-	oldfile = prev_scan
-	oldfile_header = "Orig File: %s" % oldfile
-	newfile_header = "New File: %s" % outfile
-	nowtime_html = '<h3 style="font-style:italic;">' + now.strftime('%d-%b-%Y_%H:%M:%S') + '</h3>'
-	header = """<style>
-			  body{text-align:center; background:#EEE; width:80%; margin:0 auto;}
-			  table{margin:0 auto; width:auto;}
-			  td tr {padding:0px;}
-			  .heading{width:80%; margin-left:400px;}
-			  .clear{clear:both}
-			  </style>
-			  <div class="heading">
-			  <img src="http://www.bridgestone.com/etc/images/logos/bridgestone-logo-set-en.png" style="float:left; margin-top:10px;" />
-			  <h1 style="float:left; width:50%;">Host Discovery and Comparison</h1>
-			  </div>
-			  <div class="clear"</clear>"""
+def resolve_ip(ip):
+    try:
+        host = socket.gethostbyaddr(ip)[0]
+        return f'{ip} - {host}'
+    except Exception:
+        return None
 
-	diff = difflib.HtmlDiff()
-	d = diff.make_file(open(oldfile).readlines(), open(newfile).readlines(), fromdesc=oldfile_header, todesc=newfile_header, context=True, numlines=0)
-	with open(outfile, 'w+') as doc:
-		doc.write(header)
-		doc.write(nowtime_html)
-		doc.write(d)
-		doc.close()
-		print ('\n[+] HTML report has been sucessfully written to: ', htmlfile)
-		try:
-			webbrowser.open(outfile)
-		except:
-			return
-	return
+
+def scan_ips(ip_iter, outfile_path, verbose):
+    total = 0
+    resolved = 0
+    with open(outfile_path, 'w') as out:
+        for ip in ip_iter:
+            total += 1
+            line = resolve_ip(ip)
+            if line:
+                resolved += 1
+                out.write(line + '\n')
+                if verbose:
+                    print(line)
+            else:
+                if verbose:
+                    print('Could not resolve: ' + ip)
+    if verbose:
+        print(f'Total checked: {total}. Resolved: {resolved}.')
+
+
+def scan_from_file(infile_path, outfile_path, verbose):
+    if not os.path.isfile(infile_path):
+        print('Input file not found: ' + infile_path)
+        sys.exit(1)
+    total = 0
+    resolved = 0
+    with open(outfile_path, 'w') as out, open(infile_path, 'r') as f:
+        for raw in f:
+            spec = raw.strip()
+            if not spec:
+                continue
+            for ip in iter_ips_from_range(spec):
+                total += 1
+                line = resolve_ip(ip)
+                if line:
+                    resolved += 1
+                    out.write(line + '\n')
+                    if verbose:
+                        print(line)
+                else:
+                    if verbose:
+                        print('Could not resolve: ' + ip)
+    if verbose:
+        print(f'Total checked: {total}. Resolved: {resolved}.')
+
+
+def write_html_diff(prev_scan_path, new_scan_path, html_prefix):
+    if not os.path.isfile(prev_scan_path):
+        print('Previous scan file not found: ' + prev_scan_path)
+        return
+    if not os.path.isfile(new_scan_path):
+        print('New scan file not found: ' + new_scan_path)
+        return
+
+    now = datetime.datetime.now()
+    out_html = f'{html_prefix}{now.strftime("%d-%b-%Y_%H-%M-%S")}.html'
+
+    header = """
+<style>
+body{text-align:center; background:#EEE; width:80%; margin:0 auto;}
+table{margin:0 auto; width:auto;}
+td tr {padding:0px;}
+.heading{width:80%; margin-left:400px;}
+.clear{clear:both;}
+</style>
+<div class="heading">
+<img src="http://www.bridgestone.com/etc/images/logos/bridgestone-logo-set-en.png" style="float:left; margin-top:10px;" />
+<h1 style="float:left; width:50%;">Host Discovery and Comparison</h1>
+</div>
+<div class="clear"></div>
+"""
+    now_html = f'<h3 style="font-style:italic;">{now.strftime("%d-%b-%Y_%H:%M:%S")}</h3>'
+    old_hdr = f'Orig File: {prev_scan_path}'
+    new_hdr = f'New File: {new_scan_path}'
+
+    diff = difflib.HtmlDiff()
+    with open(prev_scan_path, 'r') as f1, open(new_scan_path, 'r') as f2:
+        d_html = diff.make_file(f1.readlines(), f2.readlines(), fromdesc=old_hdr, todesc=new_hdr, context=True, numlines=0)
+
+    with open(out_html, 'w') as doc:
+        doc.write(header)
+        doc.write(now_html)
+        doc.write(d_html)
+
+    print('HTML report written to: ' + out_html)
+    try:
+        webbrowser.open(out_html)
+    except Exception:
+        pass
+
 
 def main():
-	#Set up arguments
-	parser = argparse.ArgumentParser(description='Host discovery scan using ICMP Ping requests with previous scan comparison.')
-	parser.add_argument('-r', '--range', help='IP range to check. i.e. 192.168.1.0/24 or 192.168.1.0-255', default=None)
-	parser.add_argument('-i', '--infile', help='file to read scope from. Preferably used when multiple ranges are needed')
-	parser.add_argument('-p', '--previous_scan', help='previous discovery results to compare')
-	parser.add_argument('-o', '--outfile', help='filename to export results from discovery')
-	parser.add_argument('-H', '--htmlfile', help='HTML filename to export the differences between scans')
-	parser.add_argument('-t', '--timeout', help='time in seconds to wait for lookup to complete, default is 5.', default=5)
-	parser.add_argument('-v', '--verbose', help='show verbose output', action='store_true')
-	args = parser.parse_args()
+    parser = argparse.ArgumentParser(description='Reverse DNS discovery with optional comparison.')
+    parser.add_argument('-r', '--range', help='CIDR, full range, or shorthand. Examples 192.168.1.0/24 or 192.168.1.10-192.168.1.250 or 192.168.1.0-255')
+    parser.add_argument('-i', '--infile', help='File of IPs or ranges, one per line')
+    parser.add_argument('-o', '--outfile', required=True, help='Output file for resolved hosts')
+    parser.add_argument('-p', '--previous_scan', help='Previous results to compare against')
+    parser.add_argument('-H', '--htmlfile', help='HTML output filename prefix for the diff report')
+    parser.add_argument('-t', '--timeout', type=float, default=5, help='DNS lookup timeout in seconds')
+    parser.add_argument('-v', '--verbose', action='store_true', help='Verbose output')
+    args = parser.parse_args()
 
-#Declaring Variables
-	timeout = int(args.timeout)
-	outfile = False
-	infile = False
-	verbose = True
-	ipRange = False
-	q = Queue()
+    if not args.range and not args.infile:
+        print('Provide --range or --infile')
+        sys.exit(1)
 
-	
+    try:
+        socket.setdefaulttimeout(float(args.timeout))
+    except Exception:
+        pass
 
-# Conditional Variables
-	if args.range:
-		ipRange = args.range
-	elif args.infile:
-		infile = True
-	else:
-		print('[!] input values are required, please enter a range or specify a file')
+    print('Writing results to: ' + args.outfile)
 
-	if not args.outfile:
-		print('[!] an outfile must be specified to send the results of the discovery scan')
-		return 0
-	else:
-		now = datetime.datetime.now()
-		outfile = args.outfile + '_'+ now.strftime('%d-%b-%Y_%H:%M:%S')
-		print('[+] writing files to: ', outfile)
+    if args.range:
+        ip_iter = iter_ips_from_range(args.range)
+        scan_ips(ip_iter, args.outfile, args.verbose)
+    else:
+        scan_from_file(args.infile, args.outfile, args.verbose)
 
-	if args.htmlfile and not outfile and not args.previous_scan:
-		print('[!] in order to compare results, you must specify a previous scan, outfile and an htmlfile file')
-	elif args.htmlfile and not args.previous_scan:
-		print('[!] in order to compare results, you must specify a file to compare against')
-	else:
-		htmlfile = args.htmlfile
-		prev_scan = args.previous_scan
+    if args.previous_scan and args.htmlfile:
+        try:
+            write_html_diff(args.previous_scan, args.outfile, args.htmlfile)
+        except Exception:
+            print('Could not create HTML comparison')
 
-	if args.verbose:
-		verbose = True
+    print('Done')
 
-# Do things
-	if ipRange:
-		ip = get_ips_from_range(ipRange)
-		send_to_lookup(q, verbose, outfile, timeout, ip)
-	elif infile:
-		with open(args.infile, 'r') as f:
-			for line in f:
-				address = line.strip('\n')
-				if '-' in address or '/' in address:
-					hosts = get_ips_from_range(address)
-					send_to_lookup(q, verbose, outfile, timeout, hosts)
-				else:
-					dns_reverse_lookup(address, verbose, outfile, q)
-			f.close()
-	else:
-		return 0
-
-	try:
-		compare_results(outfile, htmlfile, prev_scan)
-	except:
-		print('\n[-] could not complete the comparison')
-
-	print('[+] Done, happy hunting!')
 
 if __name__ == '__main__':
-	main()
->>>>>>> parent of 03de249... Update host-identify.py
+    main()
