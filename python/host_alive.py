@@ -1,131 +1,148 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 import argparse
-import os
-import re
-import socket
 import subprocess
-from multiprocessing import Process, Queue
+import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Iterable, List, Optional
 
 try:
     import netaddr
 except ImportError:
-    print('[-] You need to install the "netaddr" module.  Get it with "pip install netaddr".')
-    sys.exit(0)
+    print('[-] You need to install the "netaddr" module. Get it with "pip install netaddr".')
+    sys.exit(1)
 
-def get_ips_from_range(ipRange):
-    if '/' in ipRange:
+
+def get_ips_from_range(ip_range: str) -> Iterable[str]:
+    ip_range = ip_range.strip()
+
+    if '/' in ip_range:
         try:
-            cidrIPs = netaddr.IPNetwork(ipRange)
+            network = netaddr.IPNetwork(ip_range)
         except netaddr.core.AddrFormatError:
-            print('[-] Invalid IP cidr specified: ' + ipRange)
-            sys.exit(0)
-        return cidrIPs
-    elif '-' in ipRange:
-        # build ending IP from range
-        dashRange = ipRange
-        startIP , endIP = dashRange.split('-')
-        # convert to cidr notation
+            print(f'[-] Invalid CIDR specified: {ip_range}')
+            sys.exit(1)
+        return (str(ip) for ip in network)
+
+    if '-' in ip_range:
+        start_raw, end_raw = ip_range.split('-', 1)
+        start_raw = start_raw.strip()
+        end_raw = end_raw.strip()
+
+        if '.' not in end_raw:
+            base_octets = start_raw.split('.')
+            if len(base_octets) != 4:
+                print(f'[-] Invalid IP range specified: {ip_range}')
+                sys.exit(1)
+            base_octets[3] = end_raw
+            end_ip = '.'.join(base_octets)
+        else:
+            end_ip = end_raw
+
         try:
-            cidrIPs = netaddr.iprange_to_cidrs(startIP,endIP)[0]
+            ip_range_obj = netaddr.IPRange(start_raw, end_ip)
         except netaddr.core.AddrFormatError:
-            print('[-] Invalid IP range specified: ' + ipRange)
-            sys.exit(0)
-        return cidrIPs
+            print(f'[-] Invalid IP range specified: {ip_range}')
+            sys.exit(1)
+
+        return (str(ip) for ip in ip_range_obj)
+
+    print(f'[-] Invalid range format: {ip_range}')
+    sys.exit(1)
+
+
+def build_ping_command(ip: str, timeout: int) -> List[str]:
+    if sys.platform.startswith('win'):
+        return ['ping', '-n', '1', '-w', str(timeout * 1000), ip]
     else:
-        print('Something went wrong. Check your input ' + ipRange + " caused an error")
-        sys.exit(0)
-
-def send_to_lookup(q, verbose, outfile, timeout, hosts):
-    for ip in hosts:
-        try:
-            ip = str(ip)
-            proc = Process(target=ping, args=(ip, verbose, outfile, q))
-            proc.start()
-            if outfile != False:
-                line = q.get()
-                if line != None:
-                    outfile.write(line + '\n')
-            proc.join(timeout)
-            if proc.is_alive():
-                print('[!] Lookup timeout exceeded for: ' + ip)
-                proc.terminate()
-                proc.join()
-        except KeyboardInterrupt:
-            print('\n[!] Kill signal detected, shutting down.')
-            proc.terminate()
-            proc.join()
-            break
-    return
-
-def ping(ip, verbose, outfile, q):
-    response = subprocess.call('ping -c 1 %s -q' % ip, shell=True,stdout=open('/dev/null', 'w'),stderr=subprocess.STDOUT)
-    if response == 0:
-        results = '[+] %s is up!' % ip
-        return results
-        if outfile != False:
-            q.put(results)
-    else:
-        return ('[-] %s us UNREACHABLE]' % ip)
-
-def main():
-    #Set up arguments
-    parser = argparse.ArgumentParser(description='DNS Enumerator')
-    parser.add_argument('-r', '--range', help='IP range to check. i.e. 192.168.1.0/24 or 192.168.1.0-255', default=None)
-    parser.add_argument('-H', '--host', help="single host lookup", default=None)
-    parser.add_argument('-i', '--input', help='file to read ip addresses from')
-    parser.add_argument('-o', '--output', help='file to write output')
-    parser.add_argument('-t', '--timeout', help='time in seconds to wait for lookup to complete, default is 5.', default=5)
-    parser.add_argument('-v', '--verbose', help='show verbose output', action='store_true')
-    args = parser.parse_args()
-
-    #Declaring Variables
-    timeout = int(args.timeout)
-    outfile = False
-    infile = False
-    host = False
-    ipRange = False
-    verbose = False
-    q = Queue()
+        return ['ping', '-c', '1', '-W', str(timeout), ip]
 
 
-    # Conditional Variables
-    if args.verbose:
-        verbose = True
-    if args.output:
-        outfile = open(args.output, 'w')
-    if args.input:
-        infile = True
+def ping_host(ip: str, timeout: int) -> bool:
+    cmd = build_ping_command(ip, timeout)
+    try:
+        result = subprocess.run(
+            cmd,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        return False
+    return result.returncode == 0
+
+
+def scan_hosts(
+    hosts: Iterable[str],
+    timeout: int,
+    output_path: Optional[str],
+    max_workers: int = 64,
+) -> None:
+    outfile = None
+    if output_path:
+        outfile = open(output_path, 'w', encoding='utf-8')
+
+    try:
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            future_map = {executor.submit(ping_host, ip, timeout): ip for ip in hosts}
+
+            for future in as_completed(future_map):
+                ip = future_map[future]
+                try:
+                    is_up = future.result()
+                except Exception as exc:
+                    print(f'[-] {ip} ping error: {exc}')
+                    continue
+
+                if is_up:
+                    line = f'[+] {ip} is up'
+                    print(line)
+                    if outfile:
+                        outfile.write(line + '\n')
+    finally:
+        if outfile:
+            outfile.close()
+            print(f'[*] Results saved to: {output_path}')
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description='Simple host reachability scanner (ping based)')
+    parser.add_argument('-r', '--range', help='IP range, for example 192.168.1.0/24 or 192.168.1.10-50')
+    parser.add_argument('-H', '--host', help='Single host, for example 192.168.1.10')
+    parser.add_argument('-i', '--input', help='File with IP addresses, one per line')
+    parser.add_argument('-o', '--output', help='File to write reachable hosts to')
+    parser.add_argument('-t', '--timeout', type=int, default=5, help='Ping timeout in seconds per host, default 5')
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    timeout = args.timeout
+    output_path = args.output
+    hosts: List[str] = []
+
     if args.range:
-        ipRange = args.range
-    if args.host:
-        host = args.host
-
-    # Do things
-    if ipRange:
-        ip = get_ips_from_range(ipRange)
-        send_to_lookup(q, verbose, outfile, timeout, ip)
-    elif infile:
-        with open (args.input, 'r') as f:
-            for line in f:
-                host = line.strip('\n')
-#                if '-' in host or '/' in host:
-#                    host = get_ips_from_range(host)
-#                    send_to_lookup(q, verbose, outfile, timeout, host)
-#                else:
-                results = ping(host,verbose,outfile,q)
-                print (results)
-            f.close()
-    elif host:
-        results = ping(host,verbose,outfile,q)
-        print (results)
+        hosts.extend(list(get_ips_from_range(args.range)))
+    elif args.input:
+        try:
+            with open(args.input, 'r', encoding='utf-8') as f:
+                for line in f:
+                    host = line.strip()
+                    if not host:
+                        continue
+                    if '/' in host or '-' in host:
+                        hosts.extend(list(get_ips_from_range(host)))
+                    else:
+                        hosts.append(host)
+        except FileNotFoundError:
+            print(f'[-] Input file not found: {args.input}')
+            sys.exit(1)
+    elif args.host:
+        hosts.append(args.host)
     else:
-        print("[-] You need to specify either a range, input file or a host to scan silly.")
+        print('[-] You need to specify a range, input file, or a host.')
+        sys.exit(1)
 
-    if outfile != False:
-        outfile.close()
-        print('[*] Results saved to: ' + args.output)
-
+    scan_hosts(hosts, timeout, output_path)
 
 if __name__ == '__main__':
     main()
